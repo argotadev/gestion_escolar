@@ -1,0 +1,4 @@
+# Ejecución de la app (versiones fijadas: la API de Flet cambia entre versiones)
+flet==1.0.0
+flet-desktop==1.0.0
+python-docx>=1.1
