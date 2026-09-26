@@ -1,3 +1,7 @@
 .venv/
 GestionNotas.spec
 dist/
+build/
+escuela.db
+__pycache__/
+informes_generados/*.docx

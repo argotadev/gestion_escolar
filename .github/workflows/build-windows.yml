@@ -1,0 +1,74 @@
+# Compila GestionNotas.exe en una máquina Windows de GitHub.
+#
+# * Manual: pestaña Actions -> "Compilar para Windows" -> Run workflow.
+#   El .exe queda como artifact descargable en la página de la ejecución.
+# * Con un tag de versión (git tag v1.0.0 && git push origin v1.0.0):
+#   además se publica un Release con GestionNotas.exe adjunto.
+name: Compilar para Windows
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write          # necesario para crear el Release
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      PYTHONUTF8: "1"      # nombres con tildes (materias, departamentos) en la consola de Windows
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-build.txt
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-build.txt
+
+      - name: Pruebas
+        run: python -m unittest discover -s tests -v
+
+      - name: Versión
+        id: version
+        run: |
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            echo "numero=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+          else
+            echo "numero=0.0.0" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Compilar
+        run: |
+          flet pack main.py --name GestionNotas \
+            --add-data "informe.docx;." \
+            --product-name "Gestion de Notas e Informes" \
+            --file-description "Gestion de notas e informes escolares" \
+            --product-version "${{ steps.version.outputs.numero }}" -y
+
+      - name: Subir artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GestionNotas-windows
+          path: dist/GestionNotas.exe
+          retention-days: 30
+
+      - name: Publicar Release
+        if: github.ref_type == 'tag'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/GestionNotas.exe
+          generate_release_notes: true
