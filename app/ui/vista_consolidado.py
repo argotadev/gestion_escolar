@@ -11,8 +11,9 @@ from app.ui.comun import etiqueta_curso
 
 TODOS, TODAS = "todos", "todas"
 POR_PAGINA = 100
-FINAL, IFA = "final", "ifa"
-ETAPAS = [(FINAL, "Final"), ("1", "1.er cuatrimestre"), ("2", "2.º cuatrimestre"), (IFA, "IFA")]
+FINAL, IFA = estadisticas.ETAPA_FINAL, estadisticas.ETAPA_IFA
+ETAPAS = [(FINAL, "Final"), (estadisticas.ETAPA_C1, "1.er cuatrimestre"),
+          (estadisticas.ETAPA_C2, "2.º cuatrimestre"), (IFA, "IFA")]
 VA_A_IFA = "va_a_ifa"     # opción del filtro de estado: CF < 7
 
 # (título, expand o ancho fijo, alineación)
@@ -153,14 +154,8 @@ class VistaConsolidado:
             if filtro == TODOS or coincide:
                 self._filtradas.append((f, r, estado))
 
-        registros = [f.registro for f in filas]
-        if etapa == FINAL:
-            # Igual que el informe .docx.
-            resumen = estadisticas.resumir(evaluar(reg) for reg in registros)
-        elif etapa == IFA:
-            resumen = estadisticas.resumir_ifa(registros)
-        else:
-            resumen = estadisticas.resumir_cuatrimestre(registros, int(etapa))
+        # La etapa Final cuenta igual que el informe .docx.
+        resumen = estadisticas.resumir_etapa((f.registro for f in filas), etapa)
         for clave in self._stats:
             cantidad = getattr(resumen, clave)
             valor, pct = self._stats[clave]

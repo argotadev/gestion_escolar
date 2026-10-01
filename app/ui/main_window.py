@@ -4,6 +4,7 @@ from __future__ import annotations
 import flet as ft
 
 from app.ui import tema
+from app.ui.vista_analisis import VistaAnalisis
 from app.ui.vista_carga import VistaCarga
 from app.ui.vista_consolidado import VistaConsolidado
 from app.ui.vista_estudiantes import VistaEstudiantes
@@ -21,7 +22,8 @@ def main(page: ft.Page) -> None:
     page.window.width, page.window.height = 1360, 820
     page.window.min_width, page.window.min_height = 1180, 660
 
-    vistas = [VistaEstudiantes(page), VistaCarga(page), VistaConsolidado(page), VistaInformes(page)]
+    vistas = [VistaEstudiantes(page), VistaCarga(page), VistaConsolidado(page), VistaAnalisis(page),
+              VistaInformes(page)]
     contenido = ft.Container(content=vistas[0].control, expand=True,
                              padding=ft.Padding.only(left=28, right=28, top=22, bottom=20))
 
@@ -46,6 +48,8 @@ def main(page: ft.Page) -> None:
                                          label="Carga de notas"),
             ft.NavigationRailDestination(icon=ft.Icons.FACT_CHECK_OUTLINED, selected_icon=ft.Icons.FACT_CHECK,
                                          label="Consolidado"),
+            ft.NavigationRailDestination(icon=ft.Icons.INSIGHTS_OUTLINED, selected_icon=ft.Icons.INSIGHTS,
+                                         label="Análisis"),
             ft.NavigationRailDestination(icon=ft.Icons.DESCRIPTION_OUTLINED, selected_icon=ft.Icons.DESCRIPTION,
                                          label="Informes"),
         ])

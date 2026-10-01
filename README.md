@@ -59,5 +59,11 @@ van junto al .exe y los recursos incluidos se leen de la carpeta temporal de PyI
 * Consolidado: filtro por etapa (Final, 1.er cuatrimestre, 2.º cuatrimestre, IFA) con Total, Aprobados, Desaprobados,
   Ausentes y Pendientes en valor y %. La etapa Final cuenta igual que el informe; la etapa IFA cuenta solo a los
   alumnos con CF < 7. En las etapas cuatrimestrales, la pastilla "Va a IFA" marca a quien tiene CF < 7.
+* Análisis (`app/logic/analisis.py`, `app/ui/vista_analisis.py`): gráficos por curso, departamento o toda la escuela,
+  sin efecto sobre el informe. La cursada etapa por etapa (barras al 100 %), comparación por materia, curso o
+  departamento (ordenada por % de desaprobados) y distribución de notas (CF o CC) con la **zona límite** de 6 a 6,99
+  (`ZONA_LIMITE_DESDE` en `app/config.py`), qué pasó del 1.er al 2.º cuatrimestre (tabla de estados, cada fila
+  suma 100 %) y alumnos en riesgo: los que tienen `MATERIAS_RIESGO` (3) o más materias con CF < 7, contando solo
+  las materias del ámbito elegido. Los gráficos se dibujan con controles de Flet, sin dependencias extra.
 * El informe se guarda automáticamente en `informes_generados/` (con opción de abrirlo o abrir la carpeta).
 * Ubicación de TIC, EDI y seminarios en departamentos: ver `app/data/estructura_escolar.py`.

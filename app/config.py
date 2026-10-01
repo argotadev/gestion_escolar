@@ -37,3 +37,5 @@ NOTA_MIN = 1            # Menor nota admitida
 NOTA_MAX = 10           # Mayor nota admitida
 NOTA_APROBACION = 7     # Nota mínima para aprobar (ajustar según normativa)
 NOTA_AUSENTE = 4        # Nota por defecto de todo alumno "Ausente"
+ZONA_LIMITE_DESDE = 6   # Zona límite: notas desde 6 hasta antes de NOTA_APROBACION (6 a 6,99)
+MATERIAS_RIESGO = 3     # Alumno "en riesgo": esta cantidad o más de materias con CF < NOTA_APROBACION

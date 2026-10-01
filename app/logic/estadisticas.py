@@ -98,6 +98,21 @@ def resumir_ifa(registros: Iterable[RegistroNotas]) -> Resumen:
     return resumen
 
 
+# Etapas de la cursada (claves usadas por el Consolidado y el Análisis).
+ETAPA_C1, ETAPA_C2, ETAPA_FINAL, ETAPA_IFA = "1", "2", "final", "ifa"
+ETAPAS = [(ETAPA_C1, "1.er cuatrimestre"), (ETAPA_C2, "2.º cuatrimestre"),
+          (ETAPA_FINAL, "Final"), (ETAPA_IFA, "IFA")]
+
+
+def resumir_etapa(registros: Iterable[RegistroNotas], etapa: str) -> Resumen:
+    """Resumen de una etapa: cuatrimestre, Final (igual que el informe) o IFA."""
+    registros = list(registros)
+    if etapa == ETAPA_FINAL:
+        return resumir(evaluar(reg) for reg in registros)
+    if etapa == ETAPA_IFA:
+        return resumir_ifa(registros)
+    return resumir_cuatrimestre(registros, int(etapa))
+
 # ---------------------------------------------------------------------------
 # Agrupaciones usadas por el informe departamental
 # ---------------------------------------------------------------------------

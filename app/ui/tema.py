@@ -27,6 +27,17 @@ COLOR_ESTADO: dict[Estado, tuple[str, str]] = {
 }
 COLOR_VA_A_IFA = ("#B26A00", "#FFF4E0")   # CF < 7: debe rendir la IFA
 
+# Relleno de los gráficos por estado: (relleno, color del texto encima).
+# Paleta validada para daltonismo (verde y naranja difieren también en luminosidad);
+# igual se acompaña siempre con leyenda, % escrito y tooltip.
+COLOR_GRAFICO: dict[Estado, tuple[str, str]] = {
+    Estado.APROBADO: ("#047857", "#FFFFFF"),
+    Estado.DESAPROBADO: ("#EB6B3D", TEXTO),
+    Estado.AUSENTE: ("#6A4FB0", "#FFFFFF"),
+    Estado.PENDIENTE: ("#9CA3AF", TEXTO),
+}
+FONDO_ZONA_LIMITE = "#FFF4E0"   # franja detrás de las notas de 6 a 6,99 (no es un color de dato)
+
 
 def crear_tema() -> ft.Theme:
     return ft.Theme(color_scheme_seed=PRIMARIO, use_material3=True)
