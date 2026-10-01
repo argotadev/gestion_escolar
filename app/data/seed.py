@@ -4,6 +4,7 @@ from __future__ import annotations
 import random
 import sqlite3
 
+from app.config import NOTA_APROBACION, NOTA_AUSENTE
 from app.data import estructura_escolar as est
 from app.data.database import conectar, crear_esquema
 
@@ -48,7 +49,7 @@ def _poblar_estructura(con: sqlite3.Connection) -> None:
 
 
 def _nota_mock(rng: random.Random) -> dict:
-    """Genera un registro de notas verosímil (con ausentes, IF, pendientes)."""
+    """Genera un registro de notas verosímil (con ausentes, IFA, pendientes)."""
     def cuat(prefijo: str, pendiente: bool = False) -> dict:
         if pendiente:
             return {}
@@ -67,9 +68,10 @@ def _nota_mock(rng: random.Random) -> dict:
     d = {}
     d.update(cuat("c1"))
     d.update(cuat("c2", pendiente=rng.random() < 0.03))
-    van_a_if = d.get("c1_ausente") or d.get("c2_ausente") or \
-        any(d.get(k, 6) < 6 for k in ("c1_cal", "c2_cal"))
-    if van_a_if and rng.random() < 0.8:                 # 80 % ya rindió la IF
+    # Misma regla que app.logic: ausente con CC vacía = 4; va a IFA si CF < 7.
+    cc = [d.get(f"{p}_cal", NOTA_AUSENTE if d.get(f"{p}_ausente") else None) for p in ("c1", "c2")]
+    van_a_ifa = None not in cc and (cc[0] + cc[1]) / 2 < NOTA_APROBACION
+    if van_a_ifa and rng.random() < 0.8:                 # 80 % ya rindió la IFA
         if rng.random() < 0.08:
             d["if_ausente"] = 1                         # no se presentó
         else:

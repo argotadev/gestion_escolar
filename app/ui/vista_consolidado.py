@@ -1,20 +1,24 @@
-"""Vista 2 - Consolidado de estado (Aprobado / Desaprobado / A IF) - Flet."""
+"""Vista 2 - Consolidado de estado por etapa (1.er C., 2.º C., Final, IFA) - Flet."""
 from __future__ import annotations
 
 import flet as ft
 
 from app.data import repository as repo
-from app.logic.calificaciones import Estado, evaluar, formatear_cf
+from app.logic import estadisticas
+from app.logic.calificaciones import Estado, estado_cuatrimestre, estado_ifa, evaluar, formatear_cf
 from app.ui import tema
 from app.ui.comun import etiqueta_curso
 
 TODOS, TODAS = "todos", "todas"
 POR_PAGINA = 100
+FINAL, IFA = "final", "ifa"
+ETAPAS = [(FINAL, "Final"), ("1", "1.er cuatrimestre"), ("2", "2.º cuatrimestre"), (IFA, "IFA")]
+VA_A_IFA = "va_a_ifa"     # opción del filtro de estado: CF < 7
 
 # (título, expand o ancho fijo, alineación)
 COLUMNAS = [("Alumno", 3, "izq"), ("Curso", 70, "cen"), ("Materia", 4, "izq"),
-            ("Cal. 1.er C.", 90, "cen"), ("Cal. 2.º C.", 90, "cen"), ("Nota IF", 80, "cen"),
-            ("CF", 60, "cen"), ("Estado", 150, "cen")]
+            ("CC 1.er C.", 90, "cen"), ("CC 2.º C.", 90, "cen"), ("CF", 60, "cen"),
+            ("IFA", 80, "cen"), ("Estado", 210, "cen")]
 
 
 def _celda(ctrl: ft.Control, ancho, alin: str) -> ft.Container:
@@ -22,6 +26,11 @@ def _celda(ctrl: ft.Control, ancho, alin: str) -> ft.Container:
     if isinstance(ancho, int) and ancho > 20:
         return ft.Container(ctrl, width=ancho, alignment=a)
     return ft.Container(ctrl, expand=ancho, alignment=a)
+
+
+def _fmt_pct(valor: float) -> str:
+    """42.66 -> '42,7 %'."""
+    return f"{valor:.1f}".replace(".", ",") + " %"
 
 
 class VistaConsolidado:
@@ -36,17 +45,20 @@ class VistaConsolidado:
             "Curso", [(TODOS, "Todos los cursos")] + [(str(c.id), etiqueta_curso(c)) for c in self.cursos],
             str(self.cursos[0].id), 290, self._al_elegir_curso)
         self.dd_materia = tema.desplegable("Materia", [(TODAS, "Todas")], TODAS, 360, self._al_filtrar)
+        self.dd_etapa = tema.desplegable("Etapa", ETAPAS, FINAL, 200, self._al_filtrar)
         self.dd_estado = tema.desplegable(
-            "Estado", [(TODOS, "Todos")] + [(e.value, e.value) for e in Estado], TODOS, 190, self._al_filtrar)
+            "Estado", [(TODOS, "Todos")] + [(e.value, e.value) for e in Estado] + [(VA_A_IFA, "Va a IFA")],
+            TODOS, 190, self._al_filtrar)
 
-        self._stats = {k: ft.Text("0", size=26, weight=ft.FontWeight.W_700) for k in
-                       ("total", "aprobados", "desaprobados", "a_if", "pendientes")}
-        self._sub_aif = ft.Text(" ", size=12, color=tema.TEXTO_SUAVE)
+        # clave -> (valor, porcentaje); los porcentajes son sobre el total, como en el informe.
+        self._stats = {k: (ft.Text("0", size=26, weight=ft.FontWeight.W_700),
+                           ft.Text("0 %", size=17, weight=ft.FontWeight.W_600))
+                       for k in ("total", "aprobados", "desaprobados", "ausentes", "pendientes")}
         tarjetas = ft.Row([
             self._tarjeta_stat("Total", "total", tema.TEXTO),
             self._tarjeta_stat("Aprobados", "aprobados", tema.COLOR_ESTADO[Estado.APROBADO][0]),
             self._tarjeta_stat("Desaprobados", "desaprobados", tema.COLOR_ESTADO[Estado.DESAPROBADO][0]),
-            self._tarjeta_stat("A IF", "a_if", tema.COLOR_ESTADO[Estado.A_IF][0], self._sub_aif),
+            self._tarjeta_stat("Ausentes", "ausentes", tema.COLOR_ESTADO[Estado.AUSENTE][0]),
             self._tarjeta_stat("Pendientes", "pendientes", tema.COLOR_ESTADO[Estado.PENDIENTE][0]),
         ], spacing=14)
 
@@ -62,7 +74,7 @@ class VistaConsolidado:
         self.btn_sig = ft.IconButton(ft.Icons.CHEVRON_RIGHT, on_click=lambda _e: self._ir(1), tooltip="Siguiente")
         pie = ft.Row([self.lbl_pagina, ft.Container(expand=True), self.btn_ant, self.btn_sig])
 
-        barra = ft.Row([self.dd_curso, self.dd_materia, self.dd_estado, ft.Container(expand=True),
+        barra = ft.Row([self.dd_curso, self.dd_materia, self.dd_etapa, self.dd_estado, ft.Container(expand=True),
                         tema.boton_secundario("Actualizar", ft.Icons.REFRESH, lambda _e: self.actualizar())],
                        spacing=12, vertical_alignment=ft.CrossAxisAlignment.CENTER)
 
@@ -78,11 +90,11 @@ class VistaConsolidado:
         self._cargar_materias()
         self.actualizar(montada=False)
 
-    def _tarjeta_stat(self, titulo: str, clave: str, color: str, extra: ft.Control | None = None):
-        self._stats[clave].color = color
-        cuerpo = [ft.Text(titulo, size=12.5, color=tema.TEXTO_SUAVE), self._stats[clave]]
-        if extra is not None:
-            cuerpo.append(extra)
+    def _tarjeta_stat(self, titulo: str, clave: str, color: str):
+        valor, pct = self._stats[clave]
+        valor.color = pct.color = color
+        cuerpo = [ft.Text(titulo, size=12.5, color=tema.TEXTO_SUAVE), ft.Row([valor, ft.Text("|", size=20, color=tema.BORDE), pct], spacing=10,
+                                 vertical_alignment=ft.CrossAxisAlignment.CENTER)]
         return tema.tarjeta(ft.Column(cuerpo, spacing=0), padding=ft.Padding.symmetric(horizontal=18, vertical=12),
                             expand=True, height=92)
 
@@ -123,28 +135,43 @@ class VistaConsolidado:
         curso = self._cursos.get(self.dd_curso.value)
         materia = self._materias.get(self.dd_materia.value)
         filtro = self.dd_estado.value
+        etapa = self.dd_etapa.value
         filas = repo.listar_filas(curso.id if curso else None, materia.id if materia else None)
 
-        cuenta = {e: 0 for e in Estado}
         self._filtradas = []
         for f in filas:
             r = evaluar(f.registro)
-            cuenta[r.estado] += 1
-            if filtro == TODOS or r.estado.value == filtro:
-                self._filtradas.append((f, r))
+            if etapa == FINAL:
+                estado = r.estado
+            elif etapa == IFA:
+                if not r.va_a_ifa:          # la etapa IFA solo muestra a quienes deben rendirla
+                    continue
+                estado = estado_ifa(f.registro)
+            else:
+                estado = estado_cuatrimestre(f.registro.c1 if etapa == "1" else f.registro.c2)
+            coincide = r.va_a_ifa if filtro == VA_A_IFA else estado.value == filtro
+            if filtro == TODOS or coincide:
+                self._filtradas.append((f, r, estado))
 
-        self._stats["total"].value = f"{len(filas):,}".replace(",", ".")
-        self._stats["aprobados"].value = str(cuenta[Estado.APROBADO])
-        self._stats["desaprobados"].value = str(cuenta[Estado.DESAPROBADO])
-        self._stats["a_if"].value = str(cuenta[Estado.A_IF] + cuenta[Estado.A_IF_AUSENTE])
-        self._sub_aif.value = f"{cuenta[Estado.A_IF_AUSENTE]} por ausencia"
-        self._stats["pendientes"].value = str(cuenta[Estado.PENDIENTE])
+        registros = [f.registro for f in filas]
+        if etapa == FINAL:
+            # Igual que el informe .docx.
+            resumen = estadisticas.resumir(evaluar(reg) for reg in registros)
+        elif etapa == IFA:
+            resumen = estadisticas.resumir_ifa(registros)
+        else:
+            resumen = estadisticas.resumir_cuatrimestre(registros, int(etapa))
+        for clave in self._stats:
+            cantidad = getattr(resumen, clave)
+            valor, pct = self._stats[clave]
+            valor.value = f"{cantidad:,}".replace(",", ".")
+            pct.value = _fmt_pct(resumen.porcentaje(cantidad))
 
         self._pagina = 0
         self._dibujar_pagina()
         if montada:
             self._actualizar(self.lista, self.lbl_pagina, self.btn_ant, self.btn_sig,
-                             *self._stats.values(), self._sub_aif)
+                             *(t for par in self._stats.values() for t in par))
 
     def _dibujar_pagina(self) -> None:
         total = len(self._filtradas)
@@ -157,17 +184,21 @@ class VistaConsolidado:
             return formatear_cf(v) if isinstance(v, float) else ("" if v is None else str(v))
 
         filas = []
-        for i, (f, r) in enumerate(trozo):
+        cuatrimestral = self.dd_etapa.value not in (FINAL, IFA)
+        for i, (f, r, estado) in enumerate(trozo):
             reg = f.registro
+            pastillas = [tema.pastilla_estado(estado)]
+            if cuatrimestral and r.va_a_ifa:
+                pastillas.append(tema.pastilla("Va a IFA", *tema.COLOR_VA_A_IFA))
             valores = [
                 ft.Text(f.nombre_completo, size=13.5, color=tema.TEXTO, no_wrap=True,
                         overflow=ft.TextOverflow.ELLIPSIS),
                 ft.Text(f.curso.etiqueta, size=13, color=tema.TEXTO_SUAVE),
                 ft.Text(f.materia, size=13.5, color=tema.TEXTO, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
                 ft.Text(num(r.cal_c1), size=13.5), ft.Text(num(r.cal_c2), size=13.5),
-                ft.Text("Aus." if reg.if_ausente else num(reg.if_nota), size=13.5),
                 ft.Text(num(r.calificacion_final), size=14, weight=ft.FontWeight.W_700),
-                tema.pastilla_estado(r.estado),
+                ft.Text("Aus." if reg.if_ausente else num(reg.if_nota), size=13.5),
+                ft.Row(pastillas, spacing=6, alignment=ft.MainAxisAlignment.CENTER),
             ]
             filas.append(ft.Container(
                 ft.Row([_celda(v, w, a) for v, (_, w, a) in zip(valores, COLUMNAS)], spacing=0),

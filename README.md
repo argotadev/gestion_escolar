@@ -41,15 +41,23 @@ van junto al .exe y los recursos incluidos se leen de la carpeta temporal de PyI
 
 ## Reglas implementadas (`app/logic/calificaciones.py`)
 * Nota de aprobación **7** (`NOTA_APROBACION` en `app/config.py`).
-* Cuatrimestre = Nota 1 + Nota 2 (+ Intensificación cuatrimestral) → **Calificación del cuatrimestre** cargada a mano (no es promedio).
-* **Ausente**: nota 4 por defecto, pasa directo a IF; si se presenta y aprueba, aprueba la materia.
-* **IF**: van los que no aprobaron ambos cuatrimestres o estuvieron ausentes. `CF = nota de la IF`.
-* **Flujo normal**: `CF = (Cal1 + Cal2) / 2` (promedio exacto).
+* Cuatrimestre = N1 + N2 (+ **IFC**, Intensificación Cuatrimestral) → **CC** (Calificación Cuatrimestral)
+  cargada a mano (no es promedio). La IFC solo se avisa en la grilla; no entra en ningún cálculo.
+* Estado de cada cuatrimestre: **Ausente** (Aus. marcado, aunque tenga CC), **Aprobado** (CC ≥ 7),
+  **Desaprobado** (CC < 7) o **Pendiente** (CC vacía).
+* **CF** = `(CC1 + CC2) / 2` (promedio exacto, también si da menos de 7). Un cuatrimestre con Aus. y CC vacía
+  cuenta 4. La CF decide el estado final: **Aprobado** (CF ≥ 7), **Desaprobado** (CF < 7) o **Pendiente** (falta una CC).
+* **IFA** (Intensificación Anual): etapa posterior e independiente. Van solo los que tienen CF < 7. Su nota se registra
+  (va a otro informe) pero no cambia la CF ni el estado final.
+* **Ausente** (estado final): Aus. con CC vacía en los dos cuatrimestres y Aus. marcado en la IFA. Hasta que se marca
+  el Aus. de la IFA, figura Desaprobado (CF 4).
 * La CF es la única nota con decimales (hasta 2): el valor calculado se propone y el docente puede corregirlo a mano. Aprueba si CF ≥ 7.
 
 ## Supuestos a confirmar
-* Informe, categorías excluyentes: **Aprobados** (por promedio o IF), **Ausentes** (ausente que aún no rindió la IF),
-  **Desaprobados** (desaprobó, debe IF sin ser ausente, o ausente que no aprobó/no rindió la IF).
+* Informe, categorías excluyentes según el estado final (CF): **Aprobados**, **Desaprobados** y **Ausentes**.
   Los registros "Pendiente" cuentan en el total pero en ninguna columna.
+* Consolidado: filtro por etapa (Final, 1.er cuatrimestre, 2.º cuatrimestre, IFA) con Total, Aprobados, Desaprobados,
+  Ausentes y Pendientes en valor y %. La etapa Final cuenta igual que el informe; la etapa IFA cuenta solo a los
+  alumnos con CF < 7. En las etapas cuatrimestrales, la pastilla "Va a IFA" marca a quien tiene CF < 7.
 * El informe se guarda automáticamente en `informes_generados/` (con opción de abrirlo o abrir la carpeta).
 * Ubicación de TIC, EDI y seminarios en departamentos: ver `app/data/estructura_escolar.py`.

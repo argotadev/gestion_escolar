@@ -22,10 +22,10 @@ FILA_ALTERNA = "#F9FAFD"
 COLOR_ESTADO: dict[Estado, tuple[str, str]] = {
     Estado.APROBADO: ("#1B7F3B", "#E6F4EA"),
     Estado.DESAPROBADO: ("#C0392B", "#FDECEA"),
-    Estado.A_IF: ("#B26A00", "#FFF4E0"),
-    Estado.A_IF_AUSENTE: ("#B26A00", "#FFF4E0"),
+    Estado.AUSENTE: ("#5B4B8A", "#EFEBF8"),
     Estado.PENDIENTE: ("#6B7280", "#EEF0F4"),
 }
+COLOR_VA_A_IFA = ("#B26A00", "#FFF4E0")   # CF < 7: debe rendir la IFA
 
 
 def crear_tema() -> ft.Theme:
@@ -52,9 +52,13 @@ def titulo_pagina(titulo: str, subtitulo: str = "") -> ft.Control:
 
 def pastilla_estado(estado: Estado, ancho: Optional[int] = None) -> ft.Container:
     """Etiqueta redondeada con el color del estado."""
-    color, fondo = COLOR_ESTADO[estado]
+    return pastilla(estado.value, *COLOR_ESTADO[estado], ancho=ancho)
+
+
+def pastilla(texto: str, color: str, fondo: str, ancho: Optional[int] = None) -> ft.Container:
+    """Etiqueta redondeada genérica."""
     return ft.Container(
-        content=ft.Text(estado.value, size=12, weight=ft.FontWeight.W_600, color=color,
+        content=ft.Text(texto, size=12, weight=ft.FontWeight.W_600, color=color,
                         no_wrap=True),
         bgcolor=fondo, border_radius=20, width=ancho, alignment=ft.Alignment.CENTER,
         padding=ft.Padding.symmetric(horizontal=10, vertical=4))

@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS notas (
     c2_ausente  INTEGER NOT NULL DEFAULT 0,
 
     if_nota     INTEGER CHECK (if_nota BETWEEN 1 AND 10),
-    if_ausente  INTEGER NOT NULL DEFAULT 0,   -- no se presentó a la IF
+    if_ausente  INTEGER NOT NULL DEFAULT 0,   -- no se presentó a la IFA
     cf_manual   REAL CHECK (cf_manual BETWEEN 1 AND 10),  -- CF corregida a mano (NULL = calculada)
 
     UNIQUE (alumno_id, materia_id)

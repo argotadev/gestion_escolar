@@ -1,4 +1,4 @@
-"""Vista 1 - Carga de notas por curso y materia (C1, C2 e IF) - Flet."""
+"""Vista 1 - Carga de notas por curso y materia (C1, C2 e IFA) - Flet."""
 
 from __future__ import annotations
 
@@ -24,28 +24,32 @@ from app.ui.comun import etiqueta_curso
 COL_C1 = [
     ("c1_nota1", "N1"),
     ("c1_nota2", "N2"),
-    ("c1_int", "Int."),
-    ("c1_cal", "Cal."),
+    ("c1_int", "IFC"),
+    ("c1_cal", "CC"),
 ]
 COL_C2 = [
     ("c2_nota1", "N1"),
     ("c2_nota2", "N2"),
-    ("c2_int", "Int."),
-    ("c2_cal", "Cal."),
+    ("c2_int", "IFC"),
+    ("c2_cal", "CC"),
 ]
-COL_IF = [("if_nota", "Nota")]
+COL_IFA = [("if_nota", "IFA")]
+GRUPO_FINAL = "Calif. final"
+# En "Calif. final" la grilla muestra CF | Aus. (de la IFA); la columna IFA va
+# después del grupo, antes de Estado.
 GRUPOS = [
     ("1.er Cuatrimestre", COL_C1, "c1_ausente"),
     ("2.º Cuatrimestre", COL_C2, "c2_ausente"),
-    ("Calif. final", COL_IF, "if_ausente"),
+    (GRUPO_FINAL, COL_IFA, "if_ausente"),
 ]
 CAMPOS_NOTA = [c for _, cols, _ in GRUPOS for c, _ in cols]
 CAMPOS_AUS = [a for _, _, a in GRUPOS]
 
 # Anchos fijos (px) para que cabecera y filas queden perfectamente alineadas.
 W_IDX, W_NOM, W_ENT, W_AUS, W_CF, W_EST = 34, 250, 56, 44, 70, 160
-W_GRUPO = {n: len(cols) * W_ENT + W_AUS for n, cols, _ in GRUPOS}
-GRID_W = W_IDX + W_NOM + sum(W_GRUPO.values()) + W_CF + W_EST + 16
+W_IFA = len(COL_IFA) * W_ENT
+W_GRUPO = {n: (W_CF if n == GRUPO_FINAL else len(cols) * W_ENT) + W_AUS for n, cols, _ in GRUPOS}
+GRID_W = W_IDX + W_NOM + sum(W_GRUPO.values()) + W_IFA + W_EST + 16
 
 C_ERROR, C_AVISO = "#E53935", "#FFB300"
 
@@ -137,15 +141,15 @@ class VistaCarga:
 
         leyenda = ft.Row(
             [
-                self._punto(C_AVISO, "Falta intensificación cuatrimestral"),
+                self._punto(C_AVISO, "Falta intensificación (IFC o IFA)"),
                 self._punto(C_ERROR, "Nota inválida (1 a 10)"),
                 ft.Text(
-                    "Cal. = calificación del cuatrimestre (se carga a mano)",
+                    "CC = calificación cuatrimestral (se carga a mano) · IFC = intensificación cuatrimestral · IFA = intensificación anual (solo si CF < 7)",
                     size=12,
                     color=tema.TEXTO_SUAVE,
                 ),
                 ft.Text(
-                    "Aus. = ausente: nota 4 por defecto y pasa a IF",
+                    "Aus. = ausente: CC vacía cuenta 4 en la CF",
                     size=12,
                     color=tema.TEXTO_SUAVE,
                 ),
@@ -246,10 +250,13 @@ class VistaCarga:
                     W_GRUPO[nombre],
                 )
             )
-            sub.extend(th(t, W_ENT) for _, t in cols)
+            if nombre == GRUPO_FINAL:
+                sub.append(th("CF", W_CF))
+            else:
+                sub.extend(th(t, W_ENT) for _, t in cols)
             sub.append(th("Aus.", W_AUS))
-        grupos += [th("", W_CF), th("", W_EST)]
-        sub += [th("CF", W_CF), th("Estado", W_EST)]
+        grupos += [th("", W_IFA), th("", W_EST)]
+        sub += [th(t, W_ENT) for _, t in COL_IFA] + [th("Estado", W_EST)]
         return ft.Container(
             content=ft.Column(
                 [ft.Row(grupos, spacing=0), ft.Row(sub, spacing=0)], spacing=2
@@ -312,17 +319,6 @@ class VistaCarga:
                 alignment=ft.Alignment.CENTER_LEFT,
             ),
         ]
-        for nombre, cols, clave_aus in GRUPOS:
-            for campo, _ in cols:
-                tf = self._campo_nota(valores[campo], fila)
-                fila.campos[campo] = tf
-                celdas.append(_celda(tf, W_ENT))
-            cb = ft.Checkbox(
-                value=bool(aus[clave_aus]),
-                on_change=lambda _e, fl=fila: self._al_editar(fl),
-            )
-            fila.ausentes[clave_aus] = cb
-            celdas.append(_celda(cb, W_AUS))
         fila.tf_cf = self._campo_nota(None, fila)
         fila.tf_cf.value = formatear_cf(reg.cf_manual)
         fila.tf_cf.width = W_CF - 8
@@ -331,8 +327,27 @@ class VistaCarga:
                                                  allow=True, replacement_string="")
         fila.tf_cf.keyboard_type = ft.KeyboardType.TEXT
         fila.tf_cf.tooltip = "Calificación final: vacío = se usa la calculada (en gris). Hasta 2 decimales."
+
+        def campos_nota(cols) -> None:
+            for campo, _ in cols:
+                tf = self._campo_nota(valores[campo], fila)
+                fila.campos[campo] = tf
+                celdas.append(_celda(tf, W_ENT))
+
+        for nombre, cols, clave_aus in GRUPOS:
+            if nombre == GRUPO_FINAL:
+                celdas.append(_celda(fila.tf_cf, W_CF))
+            else:
+                campos_nota(cols)
+            cb = ft.Checkbox(
+                value=bool(aus[clave_aus]),
+                on_change=lambda _e, fl=fila: self._al_editar(fl),
+            )
+            fila.ausentes[clave_aus] = cb
+            celdas.append(_celda(cb, W_AUS))
+        campos_nota(COL_IFA)
         fila.pastilla = ft.Container(width=W_EST, alignment=ft.Alignment.CENTER_LEFT)
-        celdas += [_celda(fila.tf_cf, W_CF), fila.pastilla]
+        celdas.append(fila.pastilla)
         self.filas.append(fila)
         return ft.Container(
             content=ft.Row(
@@ -524,6 +539,8 @@ class VistaCarga:
                     and cuat.intensificacion is None
                 ):
                     color = C_AVISO
+            elif ok and campo == "if_nota" and res.va_a_ifa and reg.if_nota is None and not reg.if_ausente:
+                color = C_AVISO
             if tf.border_color != color or campo.endswith(("nota1", "nota2", "cal")):
                 tf.border_color = color
                 cambiados.append(tf)

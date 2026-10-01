@@ -4,18 +4,18 @@ Clasifica cada :class:`~app.logic.calificaciones.Resultado` en tres categorías
 mutuamente excluyentes, de modo que Aprobados + Desaprobados + Ausentes suman
 el total (salvo los registros aún ``Pendiente``):
 
-* **Aprobados**    -> estado ``APROBADO`` (por promedio o por IF).
-* **Ausentes**     -> ``A_IF_AUSENTE``: alumno ausente que aún puede aprobar
-  en la IF ("intensificador"). Si rinde la IF pasa a Aprobado o Desaprobado.
-* **Desaprobados** -> ``DESAPROBADO`` y ``A_IF`` (no aprobó ambas etapas y no
-  estaba ausente: engrosa la lista de desaprobados hasta que apruebe la IF).
+* **Aprobados**    -> estado ``APROBADO`` (CF >= 7).
+* **Ausentes**     -> ``AUSENTE``: ausente en ambos cuatrimestres y en la IFA.
+* **Desaprobados** -> ``DESAPROBADO`` (CF < 7; la nota de la IFA no lo cambia).
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Iterable
 
-from app.logic.calificaciones import Estado, Resultado
+from app.logic.calificaciones import (
+    Estado, RegistroNotas, Resultado, estado_cuatrimestre, estado_ifa, evaluar,
+)
 
 
 @dataclass
@@ -29,12 +29,15 @@ class Resumen:
     pendientes: int = 0
 
     def agregar(self, r: Resultado) -> None:
+        self.agregar_estado(r.estado)
+
+    def agregar_estado(self, estado: Estado) -> None:
         self.total += 1
-        if r.estado == Estado.APROBADO:
+        if estado == Estado.APROBADO:
             self.aprobados += 1
-        elif r.estado == Estado.A_IF_AUSENTE:
+        elif estado == Estado.AUSENTE:
             self.ausentes += 1
-        elif r.estado in (Estado.DESAPROBADO, Estado.A_IF):
+        elif estado == Estado.DESAPROBADO:
             self.desaprobados += 1
         else:
             self.pendientes += 1
@@ -71,6 +74,30 @@ def resumir(resultados: Iterable[Resultado]) -> Resumen:
     return resumen
 
 
+def resumir_cuatrimestre(registros: Iterable[RegistroNotas], numero: int) -> Resumen:
+    """Resumen del 1.er (``numero=1``) o 2.º (``numero=2``) cuatrimestre.
+
+    Usa el estado de cierre del cuatrimestre (ver
+    :func:`~app.logic.calificaciones.estado_cuatrimestre`).
+    """
+    resumen = Resumen()
+    for reg in registros:
+        resumen.agregar_estado(estado_cuatrimestre(reg.c1 if numero == 1 else reg.c2))
+    return resumen
+
+
+def resumir_ifa(registros: Iterable[RegistroNotas]) -> Resumen:
+    """Resumen de la IFA: cuenta solo a quienes deben rendirla (CF < 7).
+
+    No se usa en el informe .docx; es una vista aparte del Consolidado.
+    """
+    resumen = Resumen()
+    for reg in registros:
+        if evaluar(reg).va_a_ifa:
+            resumen.agregar_estado(estado_ifa(reg))
+    return resumen
+
+
 # ---------------------------------------------------------------------------
 # Agrupaciones usadas por el informe departamental
 # ---------------------------------------------------------------------------
@@ -80,8 +107,6 @@ def agrupar_por_materia_y_curso(filas) -> dict[tuple[str, int, int], Resumen]:
     ``filas`` es un iterable de objetos con ``.materia``, ``.curso`` (con
     ``anio`` y ``division``) y ``.registro`` (RegistroNotas).
     """
-    from app.logic.calificaciones import evaluar  # import local: evita ciclos
-
     grupos: dict[tuple[str, int, int], Resumen] = {}
     for f in filas:
         clave = (f.materia, f.curso.anio, f.curso.division)
