@@ -19,7 +19,7 @@ VA_A_IFA = "va_a_ifa"     # opción del filtro de estado: CF < 7
 # (título, expand o ancho fijo, alineación)
 COLUMNAS = [("Alumno", 3, "izq"), ("Curso", 70, "cen"), ("Materia", 4, "izq"),
             ("CC 1.er C.", 90, "cen"), ("CC 2.º C.", 90, "cen"), ("CF", 60, "cen"),
-            ("IFA", 80, "cen"), ("Estado", 210, "cen")]
+            ("IFA", 80, "cen"), ("Estado", 240, "cen")]
 
 
 def _celda(ctrl: ft.Control, ancho, alin: str) -> ft.Container:
@@ -44,16 +44,16 @@ class VistaConsolidado:
 
         self.dd_curso = tema.desplegable(
             "Curso", [(TODOS, "Todos los cursos")] + [(str(c.id), etiqueta_curso(c)) for c in self.cursos],
-            str(self.cursos[0].id), 290, self._al_elegir_curso)
-        self.dd_materia = tema.desplegable("Materia", [(TODAS, "Todas")], TODAS, 360, self._al_filtrar)
+            str(self.cursos[0].id), 250, self._al_elegir_curso)
+        self.dd_materia = tema.desplegable("Materia", [(TODAS, "Todas")], TODAS, 300, self._al_filtrar)
         self.dd_etapa = tema.desplegable("Etapa", ETAPAS, FINAL, 200, self._al_filtrar)
         self.dd_estado = tema.desplegable(
             "Estado", [(TODOS, "Todos")] + [(e.value, e.value) for e in Estado] + [(VA_A_IFA, "Va a IFA")],
             TODOS, 190, self._al_filtrar)
 
         # clave -> (valor, porcentaje); los porcentajes son sobre el total, como en el informe.
-        self._stats = {k: (ft.Text("0", size=26, weight=ft.FontWeight.W_700),
-                           ft.Text("0 %", size=17, weight=ft.FontWeight.W_600))
+        self._stats = {k: (ft.Text("0", size=28, weight=ft.FontWeight.W_700),
+                           ft.Text("0 %", size=19, weight=ft.FontWeight.W_600))
                        for k in ("total", "aprobados", "desaprobados", "ausentes", "pendientes")}
         tarjetas = ft.Row([
             self._tarjeta_stat("Total", "total", tema.TEXTO),
@@ -64,13 +64,13 @@ class VistaConsolidado:
         ], spacing=14)
 
         encabezado = ft.Container(
-            ft.Row([_celda(ft.Text(t, size=12, weight=ft.FontWeight.W_700, color=tema.TEXTO_SUAVE), w, a)
+            ft.Row([_celda(ft.Text(t, size=14, weight=ft.FontWeight.W_700, color=tema.TEXTO_SUAVE), w, a)
                     for t, w, a in COLUMNAS], spacing=0),
             padding=ft.Padding.symmetric(vertical=10, horizontal=12), bgcolor=tema.FILA_ALTERNA,
             border_radius=ft.BorderRadius.only(top_left=10, top_right=10))
         self.lista = ft.ListView(expand=True, spacing=0)
 
-        self.lbl_pagina = ft.Text("", size=12.5, color=tema.TEXTO_SUAVE)
+        self.lbl_pagina = ft.Text("", size=14.5, color=tema.TEXTO_SUAVE)
         self.btn_ant = ft.IconButton(ft.Icons.CHEVRON_LEFT, on_click=lambda _e: self._ir(-1), tooltip="Anterior")
         self.btn_sig = ft.IconButton(ft.Icons.CHEVRON_RIGHT, on_click=lambda _e: self._ir(1), tooltip="Siguiente")
         pie = ft.Row([self.lbl_pagina, ft.Container(expand=True), self.btn_ant, self.btn_sig])
@@ -94,7 +94,7 @@ class VistaConsolidado:
     def _tarjeta_stat(self, titulo: str, clave: str, color: str):
         valor, pct = self._stats[clave]
         valor.color = pct.color = color
-        cuerpo = [ft.Text(titulo, size=12.5, color=tema.TEXTO_SUAVE), ft.Row([valor, ft.Text("|", size=20, color=tema.BORDE), pct], spacing=10,
+        cuerpo = [ft.Text(titulo, size=14.5, color=tema.TEXTO_SUAVE), ft.Row([valor, ft.Text("|", size=22, color=tema.BORDE), pct], spacing=10,
                                  vertical_alignment=ft.CrossAxisAlignment.CENTER)]
         return tema.tarjeta(ft.Column(cuerpo, spacing=0), padding=ft.Padding.symmetric(horizontal=18, vertical=12),
                             expand=True, height=92)
@@ -186,13 +186,13 @@ class VistaConsolidado:
             if cuatrimestral and r.va_a_ifa:
                 pastillas.append(tema.pastilla("Va a IFA", *tema.COLOR_VA_A_IFA))
             valores = [
-                ft.Text(f.nombre_completo, size=13.5, color=tema.TEXTO, no_wrap=True,
+                ft.Text(f.nombre_completo, size=15, color=tema.TEXTO, no_wrap=True,
                         overflow=ft.TextOverflow.ELLIPSIS),
-                ft.Text(f.curso.etiqueta, size=13, color=tema.TEXTO_SUAVE),
-                ft.Text(f.materia, size=13.5, color=tema.TEXTO, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
-                ft.Text(num(r.cal_c1), size=13.5), ft.Text(num(r.cal_c2), size=13.5),
-                ft.Text(num(r.calificacion_final), size=14, weight=ft.FontWeight.W_700),
-                ft.Text("Aus." if reg.if_ausente else num(reg.if_nota), size=13.5),
+                ft.Text(f.curso.etiqueta, size=15, color=tema.TEXTO_SUAVE),
+                ft.Text(f.materia, size=15, color=tema.TEXTO, no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS),
+                ft.Text(num(r.cal_c1), size=15), ft.Text(num(r.cal_c2), size=15),
+                ft.Text(num(r.calificacion_final), size=16, weight=ft.FontWeight.W_700),
+                ft.Text("Aus." if reg.if_ausente else num(reg.if_nota), size=15),
                 ft.Row(pastillas, spacing=6, alignment=ft.MainAxisAlignment.CENTER),
             ]
             filas.append(ft.Container(

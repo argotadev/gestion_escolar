@@ -17,7 +17,7 @@ from app.ui.comun import etiqueta_curso
 CURSO, DEPARTAMENTO, ESCUELA = "curso", "departamento", "escuela"
 AMBITOS = [(CURSO, "Curso"), (DEPARTAMENTO, "Departamento"), (ESCUELA, "Toda la escuela")]
 TODAS = "todas"
-ALTO_MAX_COMPARACION = 352   # px; unas 11 barras
+ALTO_MAX_COMPARACION = 396   # px; unas 11 barras
 POR_MATERIA, POR_CURSO, POR_DEPARTAMENTO = "materia", "curso", "departamento"
 # Agrupaciones que tienen sentido en cada ámbito (en un curso no hay cursos que comparar).
 AGRUPACIONES = {
@@ -29,8 +29,8 @@ AGRUPACIONES = {
 
 def _titulo_tarjeta(titulo: str, subtitulo: ft.Text | str) -> ft.Control:
     if isinstance(subtitulo, str):
-        subtitulo = ft.Text(subtitulo, size=12.5, color=tema.TEXTO_SUAVE)
-    return ft.Column([ft.Text(titulo, size=16, weight=ft.FontWeight.W_700, color=tema.TEXTO), subtitulo],
+        subtitulo = ft.Text(subtitulo, size=14.5, color=tema.TEXTO_SUAVE)
+    return ft.Column([ft.Text(titulo, size=18, weight=ft.FontWeight.W_700, color=tema.TEXTO), subtitulo],
                      spacing=2, expand=True)
 
 
@@ -72,7 +72,7 @@ class VistaAnalisis:
         self.dd_etapa = tema.desplegable("Etapa", ETAPAS, ETAPA_FINAL, 180, self._al_cambiar_comparacion)
         self.dd_agrupar = tema.desplegable("Agrupar por", AGRUPACIONES[CURSO], POR_MATERIA, 170,
                                            self._al_cambiar_comparacion)
-        self.lbl_comparacion = ft.Text("", size=12.5, color=tema.TEXTO_SUAVE)
+        self.lbl_comparacion = ft.Text("", size=14.5, color=tema.TEXTO_SUAVE)
         self.lista_comparacion = ft.ListView(spacing=8)
         tarjeta_comparacion = tema.tarjeta(ft.Column([
             ft.Row([_titulo_tarjeta("Comparación", self.lbl_comparacion), self.dd_etapa, self.dd_agrupar],
@@ -82,7 +82,7 @@ class VistaAnalisis:
         # ---- 3. distribución de notas
         self.dd_nota = tema.desplegable("Nota", analisis.NOTAS, analisis.NOTA_CF, 220, self._al_cambiar_histograma)
         self.cont_histograma = ft.Container()
-        self.lbl_histograma = ft.Text("", size=12.5, color=tema.TEXTO_SUAVE)
+        self.lbl_histograma = ft.Text("", size=14.5, color=tema.TEXTO_SUAVE)
         tarjeta_histograma = tema.tarjeta(ft.Column([
             ft.Row([_titulo_tarjeta("Distribución de notas",
                                     "Cantidad de notas por valor; 6 = de 6 a 6,99."), self.dd_nota],
@@ -91,7 +91,7 @@ class VistaAnalisis:
 
         # ---- 4. del 1.er al 2.º cuatrimestre
         self.cont_matriz = ft.Container()
-        self.lbl_matriz = ft.Text("", size=12.5, color=tema.TEXTO)
+        self.lbl_matriz = ft.Text("", size=14.5, color=tema.TEXTO)
         tarjeta_matriz = tema.tarjeta(ft.Column([
             _titulo_tarjeta("Del 1.er al 2.º cuatrimestre",
                             "Cada fila suma 100 %: qué pasó en el 2.º cuatrimestre con quienes tenían "
@@ -101,7 +101,7 @@ class VistaAnalisis:
 
         # ---- 5. alumnos en riesgo
         self.cont_riesgo = ft.Container()
-        self.lbl_riesgo = ft.Text("", size=13, weight=ft.FontWeight.W_600, color=tema.TEXTO)
+        self.lbl_riesgo = ft.Text("", size=15, weight=ft.FontWeight.W_600, color=tema.TEXTO)
         self.lista_riesgo = ft.ListView(spacing=0)
         tarjeta_riesgo = tema.tarjeta(ft.Column([
             _titulo_tarjeta("Alumnos en riesgo",
@@ -209,10 +209,10 @@ class VistaAnalisis:
         self.lbl_comparacion.value = (f"Etapa {nombre_etapa}{aclaracion}, ordenado de más a menos "
                                       f"desaprobados.")
         self.lista_comparacion.controls = (
-            [graficos.fila_barra(nombre, r, ancho_rotulo=200, pct_min_rotulo=12) for nombre, r in grupos]
-            or [ft.Text("No hay notas en esta etapa.", size=13, color=tema.TEXTO_SUAVE)])
+            [graficos.fila_barra(nombre, r, ancho_rotulo=210, pct_min_rotulo=17) for nombre, r in grupos]
+            or [ft.Text("No hay notas en esta etapa.", size=15, color=tema.TEXTO_SUAVE)])
         # Crece con los grupos hasta un máximo; más allá, la lista se desplaza.
-        self.lista_comparacion.height = min(ALTO_MAX_COMPARACION, max(1, len(grupos)) * 32)
+        self.lista_comparacion.height = min(ALTO_MAX_COMPARACION, max(1, len(grupos)) * 36)
 
     def _dibujar_histograma(self) -> None:
         h = analisis.histograma((f.registro for f in self._filas), self.dd_nota.value)
@@ -240,7 +240,7 @@ class VistaAnalisis:
     def _dibujar_riesgo(self) -> None:
         if self.dd_materia.value != TODAS:
             self.cont_riesgo.content = ft.Text("Elegí “Todas” en Materia para ver este gráfico.",
-                                               size=13, color=tema.TEXTO_SUAVE)
+                                               size=15, color=tema.TEXTO_SUAVE)
             self.lbl_riesgo.value, self.lista_riesgo.controls, self.lista_riesgo.height = "", [], 0
             return
         r = analisis.riesgo(self._filas)
@@ -250,14 +250,14 @@ class VistaAnalisis:
         filas = []
         for i, a in enumerate(r.en_riesgo):
             filas.append(ft.Container(ft.Row([
-                ft.Container(ft.Text(a.nombre, size=13, color=tema.TEXTO, no_wrap=True,
-                                     overflow=ft.TextOverflow.ELLIPSIS), width=190),
-                ft.Container(ft.Text(a.curso, size=12.5, color=tema.TEXTO_SUAVE), width=60),
-                ft.Container(ft.Text(str(len(a.materias)), size=13, weight=ft.FontWeight.W_700,
+                ft.Container(ft.Text(a.nombre, size=15, color=tema.TEXTO, no_wrap=True,
+                                     overflow=ft.TextOverflow.ELLIPSIS), width=200),
+                ft.Container(ft.Text(a.curso, size=14.5, color=tema.TEXTO_SUAVE), width=70),
+                ft.Container(ft.Text(str(len(a.materias)), size=15, weight=ft.FontWeight.W_700,
                                      color=tema.TEXTO), width=28, alignment=ft.Alignment.CENTER),
-                ft.Text(", ".join(a.materias), size=12, color=tema.TEXTO_SUAVE, expand=True,
+                ft.Text(", ".join(a.materias), size=14, color=tema.TEXTO_SUAVE, expand=True,
                         no_wrap=True, overflow=ft.TextOverflow.ELLIPSIS, tooltip=", ".join(a.materias)),
             ], spacing=10), padding=ft.Padding.symmetric(vertical=6, horizontal=8),
                 bgcolor=tema.FILA_ALTERNA if i % 2 else None, border_radius=6))
         self.lista_riesgo.controls = filas
-        self.lista_riesgo.height = min(ALTO_MAX_COMPARACION, len(filas) * 32)
+        self.lista_riesgo.height = min(ALTO_MAX_COMPARACION, len(filas) * 36)

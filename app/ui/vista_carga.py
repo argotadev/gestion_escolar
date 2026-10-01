@@ -117,7 +117,7 @@ class VistaCarga:
         self.dd_materia = tema.desplegable(
             "Materia", [("", "-")], "", 380, self._al_elegir_materia
         )
-        self.lbl_info = ft.Text("", size=13, color=tema.TEXTO_SUAVE)
+        self.lbl_info = ft.Text("", size=15, color=tema.TEXTO_SUAVE)
         self.btn_guardar = tema.boton_primario(
             "Guardar cambios", ft.Icons.SAVE_OUTLINED, self.guardar
         )
@@ -145,18 +145,18 @@ class VistaCarga:
                 self._punto(C_ERROR, "Nota inválida (1 a 10)"),
                 ft.Text(
                     "CC = calificación cuatrimestral (se carga a mano) · IFC = intensificación cuatrimestral · IFA = intensificación anual (solo si CF < 7)",
-                    size=12,
+                    size=14,
                     color=tema.TEXTO_SUAVE,
                 ),
                 ft.Text(
                     "Aus. = ausente: CC vacía cuenta 4 en la CF",
-                    size=12,
+                    size=14,
                     color=tema.TEXTO_SUAVE,
                 ),
             ],
             spacing=22,
-            wrap=False,
-            scroll=ft.ScrollMode.HIDDEN,
+            wrap=True,
+            run_spacing=4,
         )
 
         barra = ft.Row(
@@ -205,9 +205,10 @@ class VistaCarga:
         return ft.Row(
             [
                 ft.Container(width=10, height=10, bgcolor=color, border_radius=5),
-                ft.Text(texto, size=12, color=tema.TEXTO_SUAVE),
+                ft.Text(texto, size=14, color=tema.TEXTO_SUAVE),
             ],
             spacing=6,
+            tight=True,
         )
 
     def _encabezado(self) -> ft.Control:
@@ -215,7 +216,7 @@ class VistaCarga:
             return _celda(
                 ft.Text(
                     texto,
-                    size=12,
+                    size=14,
                     weight=ft.FontWeight.W_700,
                     color=tema.TEXTO_SUAVE,
                     **kw,
@@ -230,7 +231,7 @@ class VistaCarga:
                 _celda(
                     ft.Text(
                         "Alumno",
-                        size=12,
+                        size=14,
                         weight=ft.FontWeight.W_700,
                         color=tema.TEXTO_SUAVE,
                     ),
@@ -243,7 +244,7 @@ class VistaCarga:
                 _celda(
                     ft.Text(
                         nombre,
-                        size=12.5,
+                        size=14.5,
                         weight=ft.FontWeight.W_700,
                         color=tema.PRIMARIO,
                     ),
@@ -270,7 +271,7 @@ class VistaCarga:
             value="" if valor is None else str(valor),
             width=W_ENT - 8,
             height=38,
-            text_size=13.5,
+            text_size=15,
             text_align=ft.TextAlign.CENTER,
             dense=True,
             content_padding=ft.Padding.symmetric(horizontal=2, vertical=9),
@@ -306,11 +307,11 @@ class VistaCarga:
         }
 
         celdas: list[ft.Control] = [
-            _celda(ft.Text(str(n), size=12.5, color=tema.TEXTO_SUAVE), W_IDX),
+            _celda(ft.Text(str(n), size=14.5, color=tema.TEXTO_SUAVE), W_IDX),
             ft.Container(
                 ft.Text(
                     f.nombre_completo,
-                    size=13.5,
+                    size=15,
                     color=tema.TEXTO,
                     no_wrap=True,
                     overflow=ft.TextOverflow.ELLIPSIS,

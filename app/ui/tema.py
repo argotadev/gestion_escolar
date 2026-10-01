@@ -55,9 +55,9 @@ def tarjeta(contenido: ft.Control, padding: int | ft.Padding = 16, **kw) -> ft.C
 
 
 def titulo_pagina(titulo: str, subtitulo: str = "") -> ft.Control:
-    partes: list[ft.Control] = [ft.Text(titulo, size=26, weight=ft.FontWeight.W_700, color=TEXTO)]
+    partes: list[ft.Control] = [ft.Text(titulo, size=28, weight=ft.FontWeight.W_700, color=TEXTO)]
     if subtitulo:
-        partes.append(ft.Text(subtitulo, size=13.5, color=TEXTO_SUAVE))
+        partes.append(ft.Text(subtitulo, size=15, color=TEXTO_SUAVE))
     return ft.Column(partes, spacing=2)
 
 
@@ -69,7 +69,7 @@ def pastilla_estado(estado: Estado, ancho: Optional[int] = None) -> ft.Container
 def pastilla(texto: str, color: str, fondo: str, ancho: Optional[int] = None) -> ft.Container:
     """Etiqueta redondeada genérica."""
     return ft.Container(
-        content=ft.Text(texto, size=12, weight=ft.FontWeight.W_600, color=color,
+        content=ft.Text(texto, size=14, weight=ft.FontWeight.W_600, color=color,
                         no_wrap=True),
         bgcolor=fondo, border_radius=20, width=ancho, alignment=ft.Alignment.CENTER,
         padding=ft.Padding.symmetric(horizontal=10, vertical=4))
@@ -79,7 +79,7 @@ def desplegable(etiqueta: str, opciones: list[tuple[str, str]], valor: str, anch
                 al_elegir: Callable) -> ft.Dropdown:
     """Dropdown con estilo uniforme. ``opciones`` = [(clave, texto), ...]."""
     return ft.Dropdown(
-        label=etiqueta, value=valor, width=ancho, dense=True, text_size=13.5,
+        label=etiqueta, value=valor, width=ancho, dense=True, text_size=15, label_style=ft.TextStyle(size=16),
         options=[ft.DropdownOption(key=k, text=t) for k, t in opciones],
         border_radius=10, border_color=BORDE, filled=True, fill_color=SUPERFICIE,
         on_select=al_elegir)
@@ -106,15 +106,16 @@ def campo_texto(etiqueta: str, valor: str = "", ancho: Optional[int] = None, **k
             al_cambiar(e)
 
     return ft.TextField(
-        label=etiqueta, value=valor, width=ancho, dense=True, text_size=13.5,
+        label=etiqueta, value=valor, width=ancho, dense=True, text_size=15, label_style=ft.TextStyle(size=16),
         border_radius=10, border_color=BORDE, filled=True, fill_color=SUPERFICIE,
         on_change=on_change, **kw)
 
 
 def boton_primario(texto: str, icono, al_click: Callable) -> ft.FilledButton:
     return ft.FilledButton(
-        content=texto, icon=icono, on_click=al_click, height=42,
+        content=texto, icon=icono, on_click=al_click, height=44,
         style=ft.ButtonStyle(
+            text_style=ft.TextStyle(size=15, weight=ft.FontWeight.W_600),
             bgcolor={ft.ControlState.DISABLED: "#D5D9EC", ft.ControlState.DEFAULT: PRIMARIO},
             color={ft.ControlState.DISABLED: "#9AA1BF", ft.ControlState.DEFAULT: "#FFFFFF"},
             shape=ft.RoundedRectangleBorder(radius=10)))
@@ -122,8 +123,9 @@ def boton_primario(texto: str, icono, al_click: Callable) -> ft.FilledButton:
 
 def boton_secundario(texto: str, icono, al_click: Callable) -> ft.OutlinedButton:
     return ft.OutlinedButton(
-        content=texto, icon=icono, on_click=al_click, height=42,
+        content=texto, icon=icono, on_click=al_click, height=44,
         style=ft.ButtonStyle(
+            text_style=ft.TextStyle(size=15, weight=ft.FontWeight.W_600),
             color={ft.ControlState.DISABLED: "#B0B7C3", ft.ControlState.DEFAULT: PRIMARIO},
             shape=ft.RoundedRectangleBorder(radius=10), side=ft.BorderSide(1, BORDE)))
 
@@ -131,5 +133,5 @@ def boton_secundario(texto: str, icono, al_click: Callable) -> ft.OutlinedButton
 def avisar(page: ft.Page, mensaje: str, error: bool = False) -> None:
     """Notificación efímera (snackbar) al pie de la ventana."""
     page.show_dialog(ft.SnackBar(
-        content=ft.Text(mensaje, color="#FFFFFF"),
+        content=ft.Text(mensaje, color="#FFFFFF", size=15),
         bgcolor="#B3261E" if error else "#2E3A59", duration=3500, behavior=ft.SnackBarBehavior.FLOATING))

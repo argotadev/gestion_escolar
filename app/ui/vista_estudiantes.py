@@ -32,10 +32,10 @@ class VistaEstudiantes:
         self.dd_curso = tema.desplegable(
             "Curso", [(str(c.id), etiqueta_curso(c)) for c in self.cursos],
             str(self.cursos[0].id), 300, lambda _e: self._al_elegir_curso())
-        self.lbl_info = ft.Text("", size=13, color=tema.TEXTO_SUAVE)
+        self.lbl_info = ft.Text("", size=15, color=tema.TEXTO_SUAVE)
 
         # ---- formulario
-        self.lbl_form = ft.Text("Nuevo estudiante", size=15, weight=ft.FontWeight.W_700,
+        self.lbl_form = ft.Text("Nuevo estudiante", size=17, weight=ft.FontWeight.W_700,
                                 color=tema.TEXTO)
         self.tf_apellido = tema.campo_texto("Apellido", ancho=240, capitalization=ft.TextCapitalization.WORDS)
         self.tf_nombre = tema.campo_texto("Nombre", ancho=240, capitalization=ft.TextCapitalization.WORDS)
@@ -75,7 +75,7 @@ class VistaEstudiantes:
     # ------------------------------------------------------------ componentes
     @staticmethod
     def _celda(texto: str, ancho: int, **kw) -> ft.Container:
-        return ft.Container(ft.Text(texto, size=13.5, no_wrap=True, **kw), width=ancho,
+        return ft.Container(ft.Text(texto, size=15, no_wrap=True, **kw), width=ancho,
                             padding=ft.Padding.symmetric(horizontal=6))
 
     def _encabezado(self) -> ft.Control:

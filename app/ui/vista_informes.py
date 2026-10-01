@@ -34,15 +34,15 @@ class VistaInformes:
         self.dd_periodo = tema.desplegable("Período", [(p, p) for p in PERIODOS], "ANUAL", 260, lambda _e: None)
 
         general = tema.tarjeta(ft.Column([
-            ft.Text("Datos generales", size=15, weight=ft.FontWeight.W_600, color=tema.TEXTO),
+            ft.Text("Datos generales", size=17, weight=ft.FontWeight.W_600, color=tema.TEXTO),
             ft.Row([self.dd_dep, self.tf_anio, self.dd_periodo], spacing=14, wrap=True),
             ft.Row([self.tf_jefe]),
         ], spacing=12), padding=18)
 
         campos: list[ft.Control] = [
-            ft.Text("Informe cualitativo", size=15, weight=ft.FontWeight.W_600, color=tema.TEXTO),
+            ft.Text("Informe cualitativo", size=17, weight=ft.FontWeight.W_600, color=tema.TEXTO),
             ft.Text("Cada texto se agrega a continuación de su rótulo en la plantilla. "
-                    "Los campos vacíos se dejan sin completar.", size=12.5, color=tema.TEXTO_SUAVE),
+                    "Los campos vacíos se dejan sin completar.", size=14.5, color=tema.TEXTO_SUAVE),
         ]
         for clave, rotulo in CAMPOS_CUALITATIVOS:
             caja = tema.campo_texto(rotulo.rstrip(":"), multiline=True, min_lines=3, max_lines=8)
@@ -55,9 +55,9 @@ class VistaInformes:
         self.btn_generar = tema.boton_primario("Generar informe (.docx)", ft.Icons.DESCRIPTION_OUTLINED,
                                                self.generar)
         pie = ft.Row([
-            ft.Icon(ft.Icons.INFO_OUTLINE, size=16, color=tema.TEXTO_SUAVE),
+            ft.Icon(ft.Icons.INFO_OUTLINE, size=18, color=tema.TEXTO_SUAVE),
             ft.Text("Los datos cuantitativos (total, aprobados, desaprobados y ausentes por curso y división) "
-                    "se calculan desde la base de datos.", size=12.5, color=tema.TEXTO_SUAVE, expand=True),
+                    "se calculan desde la base de datos.", size=14.5, color=tema.TEXTO_SUAVE, expand=True),
             self.btn_generar], spacing=8, vertical_alignment=ft.CrossAxisAlignment.CENTER)
 
         self.control = ft.Column([
@@ -147,8 +147,8 @@ class VistaInformes:
 
         self.page.show_dialog(ft.AlertDialog(
             title=ft.Row([ft.Icon(ft.Icons.CHECK_CIRCLE, color="#1B7F3B"), ft.Text("Informe generado")], spacing=10),
-            content=ft.Column([ft.Text("Se guardó en:", size=13, color=tema.TEXTO_SUAVE),
-                               ft.Text(str(salida), size=13, selectable=True)], tight=True, spacing=4),
+            content=ft.Column([ft.Text("Se guardó en:", size=15, color=tema.TEXTO_SUAVE),
+                               ft.Text(str(salida), size=15, selectable=True)], tight=True, spacing=4),
             actions=[ft.TextButton("Cerrar", on_click=cerrar),
                      ft.TextButton("Abrir carpeta", on_click=abrir_carpeta),
                      ft.FilledButton("Abrir informe", on_click=abrir)]))
