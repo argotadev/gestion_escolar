@@ -5,24 +5,52 @@ Rutas
 * En desarrollo (``python main.py``) todo vive junto al código.
 * Empaquetada como ``.exe`` (PyInstaller / ``flet pack``) el código se
   descomprime en una carpeta temporal de solo lectura (``sys._MEIPASS``), por
-  eso los datos del usuario (base de datos e informes) se guardan **junto al
-  ejecutable**, y la plantilla ``informe.docx`` se busca primero allí (para que
-  se pueda reemplazar) y, si no está, se usa la copia incluida en el paquete.
+  eso los datos del usuario (base de datos e informes) se guardan en la carpeta
+  de datos del usuario (en Windows ``%LOCALAPPDATA%\\GestionNotas``). Así no se
+  pierden aunque el .exe se abra directamente desde el .zip (Windows lo extrae a
+  una carpeta temporal que después borra), esté en una carpeta sin permisos de
+  escritura o se descargue una versión nueva en otro lugar.
+* Modo portátil: si ya hay un ``escuela.db`` junto al ejecutable (las versiones
+  anteriores lo creaban allí) se sigue usando ese, salvo que el .exe esté en una
+  carpeta temporal.
+* La plantilla ``informe.docx`` se busca primero junto al ejecutable (para que se
+  pueda reemplazar) y, si no está, se usa la copia incluida en el paquete.
 """
+import os
 import sys
+import tempfile
 from pathlib import Path
 
+APP_NOMBRE = "GestionNotas"
 EMPAQUETADO = bool(getattr(sys, "frozen", False))
+
+
+def _carpeta_datos_usuario() -> Path:
+    """Carpeta estándar del sistema para los datos de la aplicación."""
+    if sys.platform.startswith("win"):
+        base = os.environ.get("LOCALAPPDATA") or Path.home() / "AppData" / "Local"
+    elif sys.platform == "darwin":
+        base = Path.home() / "Library" / "Application Support"
+    else:
+        base = os.environ.get("XDG_DATA_HOME") or Path.home() / ".local" / "share"
+    return Path(base) / APP_NOMBRE
+
+
+def _es_temporal(carpeta: Path) -> bool:
+    return carpeta.is_relative_to(Path(tempfile.gettempdir()).resolve())
+
 
 if EMPAQUETADO:
     BASE_DIR = Path(sys.executable).resolve().parent               # carpeta del .exe
     RECURSOS_DIR = Path(getattr(sys, "_MEIPASS", BASE_DIR))       # archivos incluidos
+    portatil = (BASE_DIR / "escuela.db").exists() and not _es_temporal(BASE_DIR)
+    DATOS_DIR = BASE_DIR if portatil else _carpeta_datos_usuario()
 else:
     BASE_DIR = Path(__file__).resolve().parent.parent
-    RECURSOS_DIR = BASE_DIR
+    RECURSOS_DIR = DATOS_DIR = BASE_DIR
 
-DB_PATH = BASE_DIR / "escuela.db"
-OUTPUT_DIR = BASE_DIR / "informes_generados"
+DB_PATH = DATOS_DIR / "escuela.db"
+OUTPUT_DIR = DATOS_DIR / "informes_generados"
 
 
 def _ruta_plantilla() -> Path:

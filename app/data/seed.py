@@ -4,9 +4,9 @@ from __future__ import annotations
 import random
 import sqlite3
 
-from app.config import NOTA_APROBACION, NOTA_AUSENTE
+from app.config import DB_PATH, NOTA_APROBACION, NOTA_AUSENTE
 from app.data import estructura_escolar as est
-from app.data.database import conectar, crear_esquema
+from app.data.database import comprobar_escritura, conectar, crear_esquema
 
 APELLIDOS = [
     "González", "Rodríguez", "Gómez", "Fernández", "López", "Díaz", "Martínez",
@@ -112,7 +112,9 @@ def inicializar(alumnos_por_curso: int = 20, semilla: int = 2026, reset: bool = 
 
     :param reset: si es True borra todas las tablas antes de recrearlas.
     :param datos_prueba: si es True además genera alumnos y notas al azar.
+    :raises sqlite3.Error | OSError: si la base no se puede crear o no admite escritura.
     """
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     con = conectar()
     try:
         if reset:
@@ -126,5 +128,6 @@ def inicializar(alumnos_por_curso: int = 20, semilla: int = 2026, reset: bool = 
             if datos_prueba:
                 _poblar_alumnos_y_notas(con, alumnos_por_curso, rng)
         con.commit()
+        comprobar_escritura(con)
     finally:
         con.close()

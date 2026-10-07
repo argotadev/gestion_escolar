@@ -44,7 +44,7 @@ if /i "%1"=="onedir" (
 ) else (
     echo Ejecutable: dist\GestionNotas.exe
 )
-echo La base de datos y los informes se crean junto al .exe.
+echo Los datos se guardan en %LOCALAPPDATA%\GestionNotas (o junto al .exe si alli hay un escuela.db).
 pause
 exit /b 0
 

@@ -156,6 +156,9 @@ class VistaEstudiantes:
             self.tf_dni.error = "Ya existe un estudiante con ese DNI"
             self._actualizar(self.tf_dni)
             return
+        except Exception as exc:                      # noqa: BLE001 - se informa al usuario
+            tema.avisar_no_guardado(self.page, exc)
+            return
         curso_form = self.dd_curso_form.value
         self._limpiar_form()
         if curso_form != self.dd_curso.value:      # mostrar el curso donde quedó el alumno
@@ -196,7 +199,11 @@ class VistaEstudiantes:
 
         def eliminar(_e):
             self.page.pop_dialog()
-            repo.eliminar_alumno(a.id)
+            try:
+                repo.eliminar_alumno(a.id)
+            except Exception as exc:                  # noqa: BLE001 - se informa al usuario
+                tema.avisar_no_guardado(self.page, exc)
+                return
             if self._editando and self._editando.id == a.id:
                 self._limpiar_form()
             self._cargar_lista()

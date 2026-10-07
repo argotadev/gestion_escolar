@@ -119,6 +119,16 @@ def transaccion(db_path: Path | str | None = None):
         con.close()
 
 
+def comprobar_escritura(con: sqlite3.Connection) -> None:
+    """Hace una escritura que no cambia nada; falla si la base no se puede modificar.
+
+    SQLite abre y lee sin error una base de solo lectura (o en una carpeta sin
+    permisos) y recién falla al guardar, por eso se prueba al arrancar.
+    """
+    version = con.execute("PRAGMA user_version").fetchone()[0]
+    con.execute(f"PRAGMA user_version = {int(version)}")
+
+
 def crear_esquema(con: sqlite3.Connection) -> None:
     """Crea todas las tablas si aún no existen y migra bases anteriores."""
     con.executescript(SCHEMA)

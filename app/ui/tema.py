@@ -6,6 +6,7 @@ from typing import Callable, Optional
 
 import flet as ft
 
+from app.config import DB_PATH
 from app.logic.calificaciones import Estado
 
 # ---- Paleta -----------------------------------------------------------------
@@ -135,3 +136,18 @@ def avisar(page: ft.Page, mensaje: str, error: bool = False) -> None:
     page.show_dialog(ft.SnackBar(
         content=ft.Text(mensaje, color="#FFFFFF", size=15),
         bgcolor="#B3261E" if error else "#2E3A59", duration=3500, behavior=ft.SnackBarBehavior.FLOATING))
+
+
+def avisar_no_guardado(page: ft.Page, exc: Exception) -> None:
+    """Diálogo (no efímero) que avisa que los cambios NO quedaron guardados."""
+    page.show_dialog(ft.AlertDialog(
+        modal=True,
+        title=ft.Row([ft.Icon(ft.Icons.ERROR_OUTLINE, color="#B3261E"),
+                      ft.Text("No se guardaron los cambios")], spacing=10),
+        content=ft.Column([
+            ft.Text("No se pudo escribir en la base de datos. Lo cargado sigue en pantalla; "
+                    "revise que el archivo no esté abierto en otro programa y vuelva a intentar.", size=15),
+            ft.Text(f"Base de datos: {DB_PATH}", size=14, color=TEXTO_SUAVE, selectable=True),
+            ft.Text(f"Detalle: {exc}", size=14, color=TEXTO_SUAVE, selectable=True),
+        ], tight=True, spacing=10, width=560),
+        actions=[ft.FilledButton("Entendido", on_click=lambda _e: page.pop_dialog())]))

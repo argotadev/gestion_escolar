@@ -17,10 +17,18 @@ python -m unittest discover -s tests -v   # pruebas de las reglas de negocio
    * Resultado: `dist\GestionNotas.exe` (un solo archivo).
    * `build_windows.bat onedir` genera una carpeta `dist\GestionNotas\` (arranca más rápido
      y suele dar menos falsos positivos de antivirus).
-3. Copiar el `.exe` (o la carpeta) a cualquier lugar **con permisos de escritura**
-   (no `Program Files`): junto a él se crean `escuela.db` y `informes_generados\`.
+3. Copiar el `.exe` (o la carpeta) a cualquier lugar. Los datos (`escuela.db` e `informes_generados\`)
+   se guardan en **`%LOCALAPPDATA%\GestionNotas`** (p. ej. `C:\Users\<usuario>\AppData\Local\GestionNotas`),
+   así no se pierden aunque el .exe se abra directamente desde el .zip (Windows lo extrae a una carpeta
+   temporal que después borra) ni al reemplazarlo por una versión nueva. Para hacer una copia de
+   seguridad basta copiar ese `escuela.db`.
+   * **Modo portátil**: si junto al `.exe` hay un `escuela.db`, se usa ese (sirve para llevar programa y
+     datos en un pendrive, y para seguir usando la base que creaban las versiones anteriores).
 
 Notas:
+* Si la base de datos no admite escritura (carpeta de solo lectura, antivirus, etc.) el programa lo avisa al
+  arrancar en lugar de abrirse; si un guardado falla, muestra un aviso y lo cargado queda en pantalla. Al cerrar
+  la ventana con notas sin guardar, pregunta antes de salir.
 * `informe.docx` viaja dentro del .exe. Si se coloca un `informe.docx` **junto al .exe**, se usa ese
   (permite actualizar la plantilla sin recompilar).
 * Un .exe sin firma digital puede mostrar el aviso de SmartScreen ("Más información → Ejecutar de todas formas")
@@ -37,7 +45,8 @@ Notas:
 | Presentación | `app/ui` | tema (`tema.py`), 3 vistas Flet y ventana principal |
 
 Rutas (`app/config.py`): en desarrollo todo vive junto al código; empaquetado, los datos del usuario
-van junto al .exe y los recursos incluidos se leen de la carpeta temporal de PyInstaller.
+van a la carpeta de datos del usuario (`%LOCALAPPDATA%\GestionNotas` en Windows) o junto al .exe en modo
+portátil, y los recursos incluidos se leen de la carpeta temporal de PyInstaller.
 
 ## Reglas implementadas (`app/logic/calificaciones.py`)
 * Nota de aprobación **7** (`NOTA_APROBACION` en `app/config.py`).

@@ -84,17 +84,28 @@ class VistaInformes:
         for clave, caja in self.cajas.items():
             caja.value = textos.get(clave, "")
 
-    def _guardar_borrador(self) -> None:
-        """Guarda jefe y textos del departamento actual para no perderlos al cambiar."""
+    def guardar_borrador(self) -> None:
+        """Guarda jefe y textos del departamento actual para no perderlos al cambiar o al salir."""
         dep = self._por_id[self._dep_actual]
         repo.actualizar_jefe(dep.id, self.tf_jefe.value.strip())
         repo.guardar_textos_informe(dep.id, {k: (c.value or "").strip() for k, c in self.cajas.items()})
+
+    def _guardar_borrador_o_avisar(self) -> bool:
+        try:
+            self.guardar_borrador()
+        except Exception as exc:                      # noqa: BLE001 - se informa al usuario
+            tema.avisar_no_guardado(self.page, exc)
+            return False
+        return True
 
     def _al_elegir_departamento(self, _e) -> None:
         nuevo = self.dd_dep.value
         if nuevo == self._dep_actual:
             return
-        self._guardar_borrador()
+        if not self._guardar_borrador_o_avisar():     # se queda en el departamento para no perder los textos
+            self.dd_dep.value = self._dep_actual
+            self._actualizar(self.dd_dep)
+            return
         self._refrescar_departamentos()
         self._dep_actual = nuevo
         self._cargar_departamento()
@@ -113,9 +124,9 @@ class VistaInformes:
         if not re.fullmatch(r"\d{4}", anio):
             tema.avisar(self.page, "El ciclo lectivo debe ser un año de 4 dígitos.", error=True)
             return
-        dep = self._por_id[self._dep_actual]
+        if not self._guardar_borrador_o_avisar():
+            return
         try:
-            self._guardar_borrador()
             self._refrescar_departamentos()
             dep = self._por_id[self._dep_actual]
             textos = {k: (c.value or "").strip() for k, c in self.cajas.items()}

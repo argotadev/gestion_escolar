@@ -359,6 +359,11 @@ class VistaCarga:
             border_radius=8,
         )
 
+    @property
+    def hay_cambios(self) -> bool:
+        """True si hay notas modificadas que todavía no se guardaron."""
+        return self._sucio
+
     # -------------------------------------------------------------- selección
     def _cargar_materias(self, curso_id: str) -> None:
         materias = repo.listar_materias_de_curso(self._cursos[curso_id].id)
@@ -566,7 +571,11 @@ class VistaCarga:
             for fila in self.filas:
                 self._refrescar(fila)
             return False
-        repo.guardar_notas_lote(lote)
+        try:
+            repo.guardar_notas_lote(lote)
+        except Exception as exc:                      # noqa: BLE001 - se informa al usuario
+            tema.avisar_no_guardado(self.page, exc)
+            return False
         self._sucio = False
         self.lbl_info.value = f"{len(self.filas)} alumnos"
         self._actualizar(self.lbl_info)
