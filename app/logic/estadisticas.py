@@ -116,8 +116,23 @@ def resumir_etapa(registros: Iterable[RegistroNotas], etapa: str) -> Resumen:
 # ---------------------------------------------------------------------------
 # Agrupaciones usadas por el informe departamental
 # ---------------------------------------------------------------------------
-def agrupar_por_materia_y_curso(filas) -> dict[tuple[str, int, int], Resumen]:
+def agregar_estado_cuatrimestral(resumen: Resumen, estado: Estado) -> None:
+    """Suma un estado cuatrimestral al resumen del informe.
+
+    Los ausentes cuentan como desaprobados y los pendientes (sin CC) no se
+    cuentan: el informe cuatrimestral solo muestra Aprobados y Desaprobados.
+    """
+    if estado == Estado.PENDIENTE:
+        return
+    resumen.agregar_estado(Estado.APROBADO if estado == Estado.APROBADO else Estado.DESAPROBADO)
+
+
+def agrupar_por_materia_y_curso(filas, cuatrimestre: int | None = None
+                                ) -> dict[tuple[str, int, int], Resumen]:
     """Agrupa por ``(materia, año, división)``.
+
+    Con ``cuatrimestre`` (1 o 2) usa el estado de cierre de ese cuatrimestre
+    (ausentes = desaprobados); sin él, el estado final del año.
 
     ``filas`` es un iterable de objetos con ``.materia``, ``.curso`` (con
     ``anio`` y ``division``) y ``.registro`` (RegistroNotas).
@@ -125,7 +140,12 @@ def agrupar_por_materia_y_curso(filas) -> dict[tuple[str, int, int], Resumen]:
     grupos: dict[tuple[str, int, int], Resumen] = {}
     for f in filas:
         clave = (f.materia, f.curso.anio, f.curso.division)
-        grupos.setdefault(clave, Resumen()).agregar(evaluar(f.registro))
+        resumen = grupos.setdefault(clave, Resumen())
+        if cuatrimestre is None:
+            resumen.agregar(evaluar(f.registro))
+        else:
+            c = f.registro.c1 if cuatrimestre == 1 else f.registro.c2
+            agregar_estado_cuatrimestral(resumen, estado_cuatrimestre(c))
     return grupos
 
 

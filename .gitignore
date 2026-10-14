@@ -1,7 +1,39 @@
+# Vens
 .venv/
+
+
 GestionNotas.spec
+
+# Build
 dist/
 build/
+
+# Database && backups
 escuela.db
+
+escuela.db.bak-20261012-144141
+escuela.db.bak-20261014-002743
+escuela_bak.db-20261012-143800
+
+# Cache
 __pycache__/
+
+# Report model
 informes_generados/*.docx
+
+# Data
+data/
+alumnos_duplicados.xlsx
+alumnos_duplicados_CORREGIDOS.xlsx
+
+# Miscelaneous
+app/__init__.pyc
+app/logic/__init__.pyc
+
+importar_alumnos.py
+
+# Dev requirements
+requirements-dev.txt
+
+# Test 
+tests/test_importador.py

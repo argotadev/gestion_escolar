@@ -215,7 +215,9 @@ def generar_informe(datos: DatosInforme, ruta_salida: Path | str,
         raise FileNotFoundError(f"No se encontró la plantilla: {plantilla}")
 
     filas = repository.listar_filas(departamento_id=datos.departamento.id)
-    grupos = estadisticas.agrupar_por_materia_y_curso(filas)
+    periodo = datos.periodo.upper()
+    cuatrimestre = 1 if periodo.startswith("PRIMER") else 2 if periodo.startswith("SEGUNDO") else None
+    grupos = estadisticas.agrupar_por_materia_y_curso(filas, cuatrimestre)
     por_anio = estadisticas.agrupar_por_anio(grupos)
 
     doc = Document(str(plantilla))

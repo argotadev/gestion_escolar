@@ -55,7 +55,7 @@ class Alumno:
     id: int
     apellido: str
     nombre: str
-    dni: str
+    dni: Optional[str]          # None = sin DNI
     curso_id: int
 
     @property
@@ -143,24 +143,27 @@ def listar_alumnos(curso_id: int) -> list[Alumno]:
                     (curso_id,))]
 
 
-def crear_alumno(apellido: str, nombre: str, dni: str, curso_id: int) -> int:
-    """Da de alta un alumno; lanza :class:`DniDuplicado` si el DNI ya existe."""
+def crear_alumno(apellido: str, nombre: str, dni: Optional[str], curso_id: int) -> int:
+    """Da de alta un alumno; lanza :class:`DniDuplicado` si el DNI ya existe.
+
+    El DNI es opcional: vacío o None se guarda como NULL (puede haber varios).
+    """
     try:
         with transaccion() as con:
             cur = con.execute(
                 "INSERT INTO alumnos (apellido, nombre, dni, curso_id) VALUES (?, ?, ?, ?)",
-                (apellido, nombre, dni, curso_id))
+                (apellido, nombre, dni or None, curso_id))
             return cur.lastrowid
     except sqlite3.IntegrityError as e:
         raise DniDuplicado(dni) from e
 
 
-def actualizar_alumno(alumno_id: int, apellido: str, nombre: str, dni: str, curso_id: int) -> None:
+def actualizar_alumno(alumno_id: int, apellido: str, nombre: str, dni: Optional[str], curso_id: int) -> None:
     try:
         with transaccion() as con:
             con.execute(
                 "UPDATE alumnos SET apellido = ?, nombre = ?, dni = ?, curso_id = ? WHERE id = ?",
-                (apellido, nombre, dni, curso_id, alumno_id))
+                (apellido, nombre, dni or None, curso_id, alumno_id))
     except sqlite3.IntegrityError as e:
         raise DniDuplicado(dni) from e
 

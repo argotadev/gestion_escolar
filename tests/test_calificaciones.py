@@ -121,3 +121,17 @@ class TestCalificaciones(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_informe_cuatrimestral_ausentes_son_desaprobados():
+    from types import SimpleNamespace as NS
+    from app.logic.calificaciones import Cuatrimestre, RegistroNotas
+    from app.logic.estadisticas import agrupar_por_materia_y_curso
+    curso = NS(anio=1, division=1)
+    regs = [RegistroNotas(c1=Cuatrimestre(calificacion=8)),
+            RegistroNotas(c1=Cuatrimestre(calificacion=4)),
+            RegistroNotas(c1=Cuatrimestre(ausente=True)),
+            RegistroNotas()]
+    filas = [NS(materia="X", curso=curso, registro=r) for r in regs]
+    r = agrupar_por_materia_y_curso(filas, 1)[("X", 1, 1)]
+    assert (r.total, r.aprobados, r.desaprobados, r.ausentes, r.pendientes) == (3, 1, 2, 0, 0)

@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS alumnos (
     id       INTEGER PRIMARY KEY AUTOINCREMENT,
     apellido TEXT NOT NULL,
     nombre   TEXT NOT NULL,
-    dni      TEXT NOT NULL UNIQUE,
+    dni      TEXT UNIQUE,                 -- opcional: NULL = sin DNI (puede haber varios)
     curso_id INTEGER NOT NULL REFERENCES cursos(id)
 );
 
@@ -136,3 +136,41 @@ def crear_esquema(con: sqlite3.Connection) -> None:
     if "cf_manual" not in columnas:
         con.execute("ALTER TABLE notas ADD COLUMN cf_manual REAL "
                     "CHECK (cf_manual BETWEEN 1 AND 10)")
+    _migrar_dni_opcional(con)
+
+
+def _migrar_dni_opcional(con: sqlite3.Connection) -> None:
+    """Bases anteriores tenían ``alumnos.dni NOT NULL``: se reconstruye la tabla.
+
+    SQLite no permite quitar un NOT NULL con ALTER TABLE. Se sigue el
+    procedimiento de su documentación, con las FK desactivadas para que borrar
+    la tabla vieja no borre en cascada las notas (los ``id`` se conservan).
+    """
+    if not any(r["name"] == "dni" and r["notnull"] for r in con.execute("PRAGMA table_info(alumnos)")):
+        return
+    con.commit()
+    con.execute("PRAGMA foreign_keys = OFF")      # solo tiene efecto fuera de una transacción
+    try:
+        con.executescript("""
+            BEGIN;
+            CREATE TABLE alumnos_nueva (
+                id       INTEGER PRIMARY KEY AUTOINCREMENT,
+                apellido TEXT NOT NULL,
+                nombre   TEXT NOT NULL,
+                dni      TEXT UNIQUE,
+                curso_id INTEGER NOT NULL REFERENCES cursos(id)
+            );
+            INSERT INTO alumnos_nueva (id, apellido, nombre, dni, curso_id)
+                SELECT id, apellido, nombre, NULLIF(TRIM(dni), ''), curso_id FROM alumnos;
+            DROP TABLE alumnos;
+            ALTER TABLE alumnos_nueva RENAME TO alumnos;
+            CREATE INDEX IF NOT EXISTS idx_alumnos_curso ON alumnos(curso_id);
+        """)
+        if con.execute("PRAGMA foreign_key_check").fetchone() is not None:
+            raise sqlite3.IntegrityError("la migración del DNI dejó referencias inválidas")
+        con.commit()
+    except Exception:
+        con.rollback()
+        raise
+    finally:
+        con.execute("PRAGMA foreign_keys = ON")

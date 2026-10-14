@@ -39,7 +39,7 @@ class VistaEstudiantes:
                                 color=tema.TEXTO)
         self.tf_apellido = tema.campo_texto("Apellido", ancho=240, capitalization=ft.TextCapitalization.WORDS)
         self.tf_nombre = tema.campo_texto("Nombre", ancho=240, capitalization=ft.TextCapitalization.WORDS)
-        self.tf_dni = tema.campo_texto("DNI", ancho=150, max_length=8,
+        self.tf_dni = tema.campo_texto("DNI (opcional)", ancho=150, max_length=8,
                                        input_filter=ft.NumbersOnlyInputFilter(),
                                        on_submit=lambda _e: self.guardar())
         self.dd_curso_form = tema.desplegable(
@@ -96,7 +96,7 @@ class VistaEstudiantes:
         return ft.Container(
             ft.Row([self._celda(str(i), W_IDX, color=tema.TEXTO_SUAVE),
                     self._celda(a.apellido, W_APE), self._celda(a.nombre, W_NOM),
-                    self._celda(a.dni, W_DNI), acciones],
+                    self._celda(a.dni or "—", W_DNI, color=None if a.dni else tema.TEXTO_SUAVE), acciones],
                    spacing=0, vertical_alignment=ft.CrossAxisAlignment.CENTER),
             padding=ft.Padding.symmetric(vertical=2, horizontal=8),
             bgcolor=tema.FILA_ALTERNA if i % 2 == 0 else tema.SUPERFICIE)
@@ -133,7 +133,7 @@ class VistaEstudiantes:
         dni = (self.tf_dni.value or "").strip()
         errores = {self.tf_apellido: None if apellido else "Obligatorio",
                    self.tf_nombre: None if nombre else "Obligatorio",
-                   self.tf_dni: None if _RE_DNI.match(dni) else "7 u 8 dígitos"}
+                   self.tf_dni: None if not dni or _RE_DNI.match(dni) else "7 u 8 dígitos"}
         for tf, err in errores.items():
             tf.error = err
         self._actualizar(*errores)
@@ -170,7 +170,7 @@ class VistaEstudiantes:
 
     def _editar(self, a: repo.Alumno) -> None:
         self._editando = a
-        self.tf_apellido.value, self.tf_nombre.value, self.tf_dni.value = a.apellido, a.nombre, a.dni
+        self.tf_apellido.value, self.tf_nombre.value, self.tf_dni.value = a.apellido, a.nombre, a.dni or ""
         self.dd_curso_form.value = str(a.curso_id)
         self.lbl_form.value = f"Editando: {a.nombre_completo}"
         self.btn_guardar.content, self.btn_guardar.icon = "Guardar", ft.Icons.SAVE_OUTLINED
@@ -212,7 +212,7 @@ class VistaEstudiantes:
 
         self.page.show_dialog(ft.AlertDialog(
             modal=True, title=ft.Text("Eliminar estudiante"),
-            content=ft.Text(f"¿Eliminar a {a.nombre_completo} (DNI {a.dni})?{detalle}"),
+            content=ft.Text(f"¿Eliminar a {a.nombre_completo}{f' (DNI {a.dni})' if a.dni else ''}?{detalle}"),
             actions=[ft.TextButton("Cancelar", on_click=lambda _e: self.page.pop_dialog()),
                      ft.FilledButton("Eliminar", on_click=eliminar,
                                      style=ft.ButtonStyle(bgcolor="#C0392B", color="#FFFFFF"))]))
